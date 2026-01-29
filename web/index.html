@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Waste Segregation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 350px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        input {
+            margin: 15px 0;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #2b7cff;
+            border: none;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #155edb;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+
+        img {
+            max-width: 100%;
+            margin-top: 10px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Smart Waste Segregation</h2>
+
+    <input type="file" id="imageInput" accept="image/*"><br>
+    <button onclick="uploadImage()">Predict</button>
+
+    <div id="result"></div>
+    <img id="preview">
+</div>
+
+<script>
+async function uploadImage() {
+    const input = document.getElementById("imageInput");
+    const file = input.files[0];
+
+    if (!file) {
+        alert("Please select an image first!");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    document.getElementById("result").innerHTML = "Predicting...";
+
+    const response = await fetch("http://127.0.0.1:8000/predict", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await response.json();
+
+    document.getElementById("result").innerHTML = `
+        <strong>Class:</strong> ${data.class}<br>
+        <strong>Confidence:</strong> ${data.confidence}%
+    `;
+
+    const preview = document.getElementById("preview");
+    preview.src = URL.createObjectURL(file);
+}
+</script>
+
+</body>
+</html>

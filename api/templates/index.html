@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Waste Segregation</title>
+  <style>
+    body { 
+      font-family: Arial; 
+      margin: 40px; 
+      text-align: center; 
+    }
+
+    h1, h2 {
+      margin-bottom: 20px;
+    }
+
+    input[type="file"], button {
+      margin-top: 10px;
+      padding: 8px 12px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #results { 
+      display: flex; 
+      flex-wrap: wrap; 
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .result-card { 
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 10px; 
+      padding: 10px; 
+      border: 1px solid #ccc; 
+      text-align: center;
+      width: 180px;
+    }
+
+    .result-card img {
+      max-width: 150px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Waste Segregation</h1>
+
+  <h2>Batch Image Upload</h2>
+  <input type="file" id="files" multiple />
+  <br/>
+  <button onclick="uploadImages()">Upload & Classify</button>
+
+  <div id="results"></div>
+
+  <script>
+  async function uploadImages() {
+    const resultsDiv = document.getElementById("results");
+    resultsDiv.innerHTML = ""; // Clear previous results
+
+    const files = document.getElementById("files").files;
+    if (files.length === 0) {
+      alert("Please select at least one image.");
+      return;
+    }
+
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+      formData.append("files", files[i]); // Must match FastAPI List[UploadFile] param
+    }
+
+    try {
+      const res = await fetch("/predict", {
+        method: "POST",
+        body: formData
+      });
+
+      if (!res.ok) {
+        alert("Error uploading images. Status: " + res.status);
+        return;
+      }
+
+      let data = await res.json();
+
+      // Ensure it's always an array
+      if (!Array.isArray(data)) {
+        if (data.predictions) {
+          data = data.predictions;
+        } else {
+          data = [data];
+        }
+      }
+
+      data.forEach((item, index) => {
+        const card = document.createElement("div");
+        card.className = "result-card";
+        card.innerHTML = `
+          <img src="${URL.createObjectURL(files[index])}" />
+          <p>${item.class_name} (${(item.confidence * 100).toFixed(1)}%)</p>
+        `;
+        resultsDiv.appendChild(card);
+      });
+
+    } catch (err) {
+      alert("Error uploading images: " + err.message);
+    }
+  }
+</script>
+
+</body>
+</html>
